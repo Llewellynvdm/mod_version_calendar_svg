@@ -7,7 +7,7 @@
 	<authorUrl>http://www.joomla.org</authorUrl>
 	<copyright>(C) 2020 Open Source Matters, Inc.</copyright>
 	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
-	<version>1.0.1</version>
+	<version>1.0.2</version>
 	<description>MOD_VERSION_CALENDAR_SVG_XML_DESCRIPTION</description>
 
 	<!-- Scripts to run on installation -->
@@ -203,6 +203,36 @@
 			default="#f44321"
 			label="MOD_VERSION_CALENDAR_SVG_TODAY_TEXT_COLOR_LABEL"
 			required="true"
+		/>
+		<!-- Show_legend Field. Type: Radio. (joomla) -->
+		<field
+			type="radio"
+			name="show_legend"
+			label="MOD_VERSION_CALENDAR_SVG_SHOW_LEGEND_LABEL"
+			description="MOD_VERSION_CALENDAR_SVG_SHOW_LEGEND_DESCRIPTION"
+			class="btn-group btn-group-yesno"
+			default="1">
+			<!-- Option Set. -->
+			<option value="1">
+				MOD_VERSION_CALENDAR_SVG_YES</option>
+			<option value="0">
+				MOD_VERSION_CALENDAR_SVG_NO</option>
+		</field>
+		<!-- Legend_background_color Field. Type: Color. (joomla) -->
+		<field
+			type="color"
+			name="legend_background_color"
+			default="#494444"
+			label="MOD_VERSION_CALENDAR_SVG_LEGEND_BACKGROUND_COLOR_LABEL"
+			showon="show_legend:1"
+		/>
+		<!-- Legend_text_color Field. Type: Color. (joomla) -->
+		<field
+			type="color"
+			name="legend_text_color"
+			default="#fbf3ef"
+			label="MOD_VERSION_CALENDAR_SVG_LEGEND_TEXT_COLOR_LABEL"
+			showon="show_legend:1"
 		/>
 	</fieldset>
 	<!-- default paths of dates fieldset points to the module -->
