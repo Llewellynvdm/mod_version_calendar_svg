@@ -90,13 +90,13 @@ defined('_JEXEC') or die('Restricted access');
 		<?php foreach ($branches as $branch): ?>
 			<?php
 				$x_release = $helper->coordinates(new DateTime($branch->start));
-				$x_bug = $helper->coordinates(new DateTime($branch->bug));
 				$x_eol = $helper->coordinates(new DateTime($branch->end));
+				$x_security = (empty($branch->security)) ? $x_eol : $helper->coordinates(new DateTime($branch->security));
 			?>
 			<rect class="stable" x="<?php echo $x_release; ?>" y="<?php echo $branch->top; ?>"
-				width="<?php echo $x_bug - $x_release; ?>" height="<?php echo $params->get('branch_height', 30); ?>"/>
-			<rect class="security" x="<?php echo $x_bug; ?>" y="<?php echo $branch->top; ?>"
-				width="<?php echo $x_eol - $x_bug; ?>" height="<?php echo $params->get('branch_height', 30); ?>"/>
+				width="<?php echo $x_security - $x_release; ?>" height="<?php echo $params->get('branch_height', 30); ?>"/>
+			<rect class="security" x="<?php echo $x_security; ?>" y="<?php echo $branch->top; ?>"
+				width="<?php echo $x_eol - $x_security; ?>" height="<?php echo $params->get('branch_height', 30); ?>"/>
 		<?php endforeach; ?>
 	</g>
 

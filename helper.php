@@ -175,19 +175,19 @@ class ModVersion_Calendar_svgHelper
 	public function state(stdClass $branch): ?string
 	{
 		$initial = new DateTime($branch->start);
-		$bug = new DateTime($branch->bug);
-		$security = new DateTime($branch->end);
+		$security = new DateTime($branch->security);
+		$end = new DateTime($branch->end);
 
-		if ($initial && $bug && $security)
+		if ($initial && $security)
 		{
 			$now = new DateTime;
 
-			if ($now >= $security)
+			if ($now >= $end)
 			{
 				return 'eol';
 			}
 
-			if ($now >= $bug)
+			if ($security && $now >= $security)
 			{
 				return 'security';
 			}
