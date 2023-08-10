@@ -63,11 +63,8 @@ defined('_JEXEC') or die('Restricted access');
 	</style>
 	<!-- Branch labels -->
 	<g class="branch-labels">
-		<?php $active = []; ?>
 		<?php foreach ($branches as $branch): ?>
-			<?php $state = $helper->state($branch); ?>
-			<?php $active[$state] = $state; ?>
-			<g class="<?php echo $state; ?>">
+			<g class="<?php echo $helper->state($branch); ?>">
 				<rect x="0" y="<?php echo $branch->top; ?>" width="<?php echo 0.5 * $params->get('margin_left', 80); ?>"
 					height="<?php echo $params->get('branch_height', 30); ?>"/>
 				<text x="<?php echo 0.25 * $params->get('margin_left', 80); ?>" y="<?php echo $branch->top + (0.5 * $params->get('branch_height', 30)); ?>">
@@ -180,38 +177,30 @@ defined('_JEXEC') or die('Restricted access');
 <div class="vdm-box-shadow-medium">
 	<div class="vdm-card vdm-card-legend vdm-card-body">
 		<div class="vdm-grid-match vdm-grid">
-			<?php if (isset($active['future'])): ?>
-				<div class="vdm-flex vdm-flex-middle">
-					<span
-						class="vdm-color-box vdm-future hasTooltip"
-						title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_PLANNED_RELEASE_SCHEDULE'); ?>"
-					></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_FUTURE_RELEASES'); ?>
-				</div>
-			<?php endif; ?>
-			<?php if (isset($active['stable'])): ?>
-				<div class="vdm-flex vdm-flex-middle">
-					<span
-						class="vdm-color-box vdm-stable hasTooltip"
-						title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_STABLE_RELEASE_SCHEDULE_EXPECT_FULL_SUPPORT_AND_UPDATES'); ?>"
-					></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_STABLE_RELEASE'); ?>
-				</div>
-			<?php endif; ?>
-			<?php if (isset($active['security'])): ?>
-				<div class="vdm-flex vdm-flex-middle">
-					<span
-						class="vdm-color-box vdm-security hasTooltip"
-						title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_SECURITY_SCHEDULE_EXPECT_ONLY_SECURITY_UPDATES'); ?>"
-					></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_SECURITY_RELEASE'); ?>
-				</div>
-			<?php endif; ?>
-			<?php if (isset($active['eol'])): ?>
-				<div class="vdm-flex vdm-flex-middle">
-					<span
-						class="vdm-color-box vdm-end-of-life hasTooltip"
-						title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_VERSION_END_OF_LIFE_SCHEDULE_EXPECT_NO_MORE_SUPPORT'); ?>"
-					></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_VERSION_AT_END_OF_LIFE'); ?>
-				</div>
-			<?php endif; ?>
+			<div class="vdm-flex vdm-flex-middle">
+				<span
+					class="vdm-color-box vdm-future hasTooltip"
+					title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_PLANNED_RELEASE_SCHEDULE'); ?>"
+				></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_FUTURE_RELEASES'); ?>
+			</div>
+			<div class="vdm-flex vdm-flex-middle">
+				<span
+					class="vdm-color-box vdm-stable hasTooltip"
+					title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_STABLE_RELEASE_SCHEDULE_EXPECT_FULL_SUPPORT_AND_UPDATES'); ?>"
+				></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_STABLE_RELEASE'); ?>
+			</div>
+			<div class="vdm-flex vdm-flex-middle">
+				<span
+					class="vdm-color-box vdm-security hasTooltip"
+					title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_SECURITY_SCHEDULE_EXPECT_ONLY_SECURITY_UPDATES'); ?>"
+				></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_SECURITY_RELEASE'); ?>
+			</div>
+			<div class="vdm-flex vdm-flex-middle">
+				<span
+					class="vdm-color-box vdm-end-of-life hasTooltip"
+					title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_VERSION_END_OF_LIFE_SCHEDULE_EXPECT_NO_MORE_SUPPORT'); ?>"
+				></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_VERSION_AT_END_OF_LIFE'); ?>
+			</div>
 		</div>
 	</div>
 </div>
