@@ -14,17 +14,25 @@ defined('_JEXEC') or die('Restricted access');
 // Include the helper functions only once
 JLoader::register('ModVersion_Calendar_svgHelper', __DIR__ . '/helper.php');
 
-// Get the Helper class
-$helper = new ModVersion_Calendar_svgHelper($params);
+try
+{
+	// Get the Helper class
+	$helper = new ModVersion_Calendar_svgHelper($params);
 
-// set the branches
-$branches = $helper->branches();
+	// set the branches
+	$branches = $helper->branches();
 
-// set branch qty
-$qty = count($branches);
+	// set branch qty
+	$qty = count($branches);
 
-// get the module class sfx (local)
-$moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
+	// get the module class sfx (local)
+	$moduleclass_sfx = htmlspecialchars($params->get('moduleclass_sfx'), ENT_COMPAT, 'UTF-8');
 
-// load the default Tmpl
-require JModuleHelper::getLayoutPath('mod_version_calendar_svg', $params->get('layout', 'default'));
+	// load the default Tmpl
+	require JModuleHelper::getLayoutPath('mod_version_calendar_svg', $params->get('layout', 'default'));
+} 
+catch (Exception $e) 
+{
+	// Output a warning message along with the exception message
+	echo "Warning: " . $e->getMessage();
+}

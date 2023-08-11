@@ -21,50 +21,53 @@ defined('_JEXEC') or die('Restricted access');
 			font-family: "Source Sans Pro", Helvetica, Arial, sans-serif;
 			font-size: <?php echo (2 / 3) * $params->get('header_height', 24); ?>px;
 		}
-		g.future rect,
-		.branches rect.future {
-			fill: <?php echo $params->get('future_color', '#000'); ?>;
+		g.vcs-future rect,
+		.vcs-branches rect.vcs-future {
+			fill: <?php echo $params->get('future_color', '#5091cd'); ?>;
 		}
-		g.eol rect,
-		.branches rect.eol {
+		g.vcs-future text {
+			fill: <?php echo $params->get('future_text_color', '#fff'); ?>;
+		}
+		g.vcs-eol rect,
+		.vcs-branches rect.vcs-eol {
 			fill: <?php echo $params->get('end_of_life_color', '#f33'); ?>;
 		}
-		g.eol text {
+		g.vcs-eol text {
 			fill: <?php echo $params->get('end_of_life_text_color', '#fff'); ?>;
 		}
-		g.security rect,
-		.branches rect.security {
-			fill: <?php echo $params->get('security_color', '#f93'); ?>;
-		}
-		g.stable rect,
-		.branches rect.stable {
-			fill: <?php echo $params->get('stable_color', '#9c9'); ?>;
-		}
-		.branch-labels text {
+		<?php foreach ($branches as $version): ?>
+			<?php foreach ($version->dates as $date): ?>
+				g.<?php echo $date->state; ?> rect,
+				.vcs-branches rect.<?php echo $date->state; ?> {
+					fill: <?php echo $date->color; ?>;
+				}
+			<?php endforeach; ?>
+		<?php endforeach; ?>
+		.vcs-branch-labels text {
 		dominant-baseline: central;
 			text-anchor: middle;
 		}
-		.today line {
+		.vcs-today line {
 			stroke: <?php echo $params->get('today_line_color', '#f33'); ?>;
 			stroke-dasharray: 7, 7;
 			stroke-width: 3px;
 		}
-		.today text {
+		.vcs-today text {
 			fill: <?php echo $params->get('today_text_color', '#f33'); ?>;
 			text-anchor: middle;
 		}
-		.years line {
+		.vcs-years line {
 			stroke: <?php echo $params->get('years_line_color', '#000'); ?>;
 		}
-		.years text {
+		.vcs-years text {
 			fill: <?php echo $params->get('years_text_color', '#000'); ?>;
 			text-anchor: middle;
 		}
 	</style>
 	<!-- Branch labels -->
-	<g class="branch-labels">
-		<?php foreach ($branches as $branch): ?>
-			<g class="<?php echo $helper->state($branch); ?>">
+	<g class="vcs-branch-labels">
+		<?php foreach ($branches as $key => $branch): ?>
+			<g class="<?php echo $helper->state($branch->dates); ?>">
 				<rect x="0" y="<?php echo $branch->top; ?>" width="<?php echo 0.5 * $params->get('margin_left', 80); ?>"
 					height="<?php echo $params->get('branch_height', 30); ?>"/>
 				<text x="<?php echo 0.25 * $params->get('margin_left', 80); ?>" y="<?php echo $branch->top + (0.5 * $params->get('branch_height', 30)); ?>">
@@ -74,21 +77,31 @@ defined('_JEXEC') or die('Restricted access');
 		<?php endforeach; ?>
 	</g>
 	<!-- Branch blocks -->
-	<g class="branches">
-		<?php foreach ($branches as $branch): ?>
+	<g class="vcs-branches">
+		<?php foreach ($branches as $key => $version): ?>
 			<?php
-				$x_release = $helper->coordinates(new DateTime($branch->start));
-				$x_eol = $helper->coordinates(new DateTime($branch->end));
-				$x_security = (empty($branch->security)) ? $x_eol : $helper->coordinates(new DateTime($branch->security));
+				$y = $version->top;
+				$height = $params->get('branch_height', 30);
 			?>
-			<rect class="stable" x="<?php echo $x_release; ?>" y="<?php echo $branch->top; ?>"
-				width="<?php echo $x_security - $x_release; ?>" height="<?php echo $params->get('branch_height', 30); ?>"/>
-			<rect class="security" x="<?php echo $x_security; ?>" y="<?php echo $branch->top; ?>"
-				width="<?php echo $x_eol - $x_security; ?>" height="<?php echo $params->get('branch_height', 30); ?>"/>
+			<?php foreach ($version->dates as $date): ?>
+				<?php
+					$x_start = $helper->coordinates(new DateTime($date->start));
+					$x_end = $helper->coordinates(new DateTime($date->end));
+				?>
+				<g class="<?php echo $date->state; ?>">
+					<rect
+						x="<?php echo $x_start; ?>"
+						y="<?php echo $y; ?>"
+						width="<?php echo $x_end - $x_start; ?>"
+						height="<?php echo $height; ?>">
+							<title><?php echo htmlspecialchars($date->label); ?></title>
+					</rect>
+				</g>
+			<?php endforeach; ?>
 		<?php endforeach; ?>
 	</g>
 	<!-- Year lines -->
-	<g class="years">
+	<g class="vcs-years">
 		<?php foreach ($helper->years() as $date): ?>
 			<line x1="<?php echo $helper->coordinates($date); ?>" y1="<?php echo $params->get('header_height', 24); ?>"
 				x2="<?php echo $helper->coordinates($date); ?>"
@@ -99,7 +112,7 @@ defined('_JEXEC') or die('Restricted access');
 		<?php endforeach; ?>
 	</g>
 	<!-- Today -->
-	<g class="today">
+	<g class="vcs-today">
 		<?php
 			$now = new DateTime;
 			$x = $helper->coordinates($now);
@@ -108,96 +121,97 @@ defined('_JEXEC') or die('Restricted access');
 			y2="<?php echo $params->get('header_height', 24) + ($qty * $params->get('branch_height', 30)); ?>"/>
 		<text x="<?php echo $x; ?>"
 			y="<?php echo $params->get('header_height', 24) + ($qty * $params->get('branch_height', 30)) + (0.8 * $params->get('footer_height', 24)); ?>">
-			<?php echo 'Today: ' . $now->format('j M Y'); ?>
+			<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_TODAY') . ': ' . $now->format('j M Y'); ?>
 		</text>
 	</g>
 </svg>
 <?php if ($params->get('show_legend', 0) == 1): ?>
+<?php 
+// get the legend values
+$legend = $helper->legend();
+?>
 <style type="text/css">
 	/* Box Shadow */
-	.vdm-box-shadow-medium {
+	.vcs-box-shadow-medium {
 		box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15), 0 0.5rem 1.5rem rgba(0, 0, 0, 0.25);
 	}
 	/* Card Styles */
-	.vdm-card {
+	.vcs-card {
 		border-radius: 4px;
 		margin-top: 15px;
 	}
-	.vdm-card-legend {
+	.vcs-card-legend {
 		background-color: <?php echo $params->get('legend_background_color', '#494444'); ?>;
 		color: <?php echo $params->get('legend_text_color', '#fbf3ef'); ?>;
 	}
-	.vdm-card-body {
+	.vcs-card-body {
 		padding: 4px;
 	}
 	/* Grid Styles */
-	.vdm-grid {
+	.vcs-grid {
 		display: flex;
 		flex-wrap: wrap;
 	}
-	.vdm-grid-match > div {
+	.vcs-grid-match > div {
 		padding: 5px;
 		min-height: 1px;
 		margin: 10px;
 	}
 	/* Flexbox Styles */
-	.vdm-flex {
+	.vcs-flex {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 	}
-	.vdm-flex-middle {
+	.vcs-flex-middle {
 		align-items: center;
 	}
 	/* Color Box Styles */
-	.vdm-color-box {
+	.vcs-color-box {
 		width: 20px;
 		height: 20px;
 		display: inline-block;
 		margin-right: 5px;
 	}
-	.vdm-future { background-color: <?php echo $params->get('future_color', '#000'); ?>; }
-	.vdm-stable { background-color: <?php echo $params->get('stable_color', '#9c9'); ?>; }
-	.vdm-security { background-color: <?php echo $params->get('security_color', '#f93'); ?>; }
-	.vdm-end-of-life { background-color: <?php echo $params->get('end_of_life_color', '#f33'); ?>; }
+	.vcs-future { background-color: <?php echo $params->get('future_color', '#000'); ?>; }
+	.vcs-eol { background-color: <?php echo $params->get('end_of_life_color', '#f33'); ?>; }
+	<?php foreach ($legend as $state): ?>
+		.<?php echo $state->state; ?> { background-color: <?php echo $state->color; ?>; }
+	<?php endforeach; ?>
 	/* Media Query for smaller screens */
 	@media (max-width: 768px) {
-		.vdm-grid {
+		.vcs-grid {
 			flex-direction: column;
 		}
-		.vdm-flex {
+		.vcs-flex {
 			display: block;
 		}
-		.vdm-grid-match > div {
+		.vcs-grid-match > div {
 			margin: 4px;
 			padding: 0;
 		}
 	}
 </style>
-<div class="vdm-box-shadow-medium">
-	<div class="vdm-card vdm-card-legend vdm-card-body">
-		<div class="vdm-grid-match vdm-grid">
-			<div class="vdm-flex vdm-flex-middle">
+<div class="vcs-box-shadow-medium">
+	<div class="vcs-card vcs-card-legend vcs-card-body">
+		<div class="vcs-grid-match vcs-grid">
+			<div class="vcs-flex vcs-flex-middle">
 				<span
-					class="vdm-color-box vdm-future hasTooltip"
+					class="vcs-color-box vcs-future hasTooltip"
 					title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_PLANNED_RELEASE_SCHEDULE'); ?>"
 				></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_FUTURE_RELEASES'); ?>
 			</div>
-			<div class="vdm-flex vdm-flex-middle">
+			<?php foreach ($legend as $state): ?>
+				<div class="vcs-flex vcs-flex-middle">
+					<span
+						class="vcs-color-box <?php echo $state->state; ?> hasTooltip"
+						title="<?php echo $state->description ?? ''; ?>"
+					></span><?php echo $state->label; ?>
+				</div>
+			<?php endforeach; ?>
+			<div class="vcs-flex vcs-flex-middle">
 				<span
-					class="vdm-color-box vdm-stable hasTooltip"
-					title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_STABLE_RELEASE_SCHEDULE_EXPECT_FULL_SUPPORT_AND_UPDATES'); ?>"
-				></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_STABLE_RELEASE'); ?>
-			</div>
-			<div class="vdm-flex vdm-flex-middle">
-				<span
-					class="vdm-color-box vdm-security hasTooltip"
-					title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_SECURITY_SCHEDULE_EXPECT_ONLY_SECURITY_UPDATES'); ?>"
-				></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_SECURITY_RELEASE'); ?>
-			</div>
-			<div class="vdm-flex vdm-flex-middle">
-				<span
-					class="vdm-color-box vdm-end-of-life hasTooltip"
+					class="vcs-color-box vcs-eol hasTooltip"
 					title="<?php echo JText::_('MOD_VERSION_CALENDAR_SVG_VERSION_END_OF_LIFE_SCHEDULE_EXPECT_NO_MORE_SUPPORT'); ?>"
 				></span><?php echo JText::_('MOD_VERSION_CALENDAR_SVG_VERSION_AT_END_OF_LIFE'); ?>
 			</div>

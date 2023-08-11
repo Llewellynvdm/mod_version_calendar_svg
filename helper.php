@@ -40,6 +40,14 @@ class ModVersion_Calendar_svgHelper
 	protected $branches;
 
 	/**
+	 * The Legend
+	 *
+	 * @var    array
+	 * @since  1.0
+	 */
+	protected $legend;
+
+	/**
 	 * The Width
 	 *
 	 * @var    int
@@ -132,72 +140,102 @@ class ModVersion_Calendar_svgHelper
 	/**
 	 * Get Branches
 	 *
+	 * Fetches and processes the branches or versions from the parameters. 
+	 * It sanitizes the branch data, calculates their positions, sorts them, and then returns.
+	 * If no valid branches or versions are found, it throws an exception.
+	 *
 	 * @return array
-	 * @since 1.0.0
+	 *
+	 * @since 2.0.1
+	 * @throws Exception If no valid branches or versions are found.
 	 */
 	public function branches(): array
 	{
 		if (empty($this->branches))
 		{
-			$branches = (array) $this->params->get('dates',  null);
+			$branches = (array) $this->params->get('versions');
 
-			if (is_array($branches) && count($branches) > 0)
+			if (empty($branches))
 			{
-				$branch_height = $this->params->get('branch_height', 30);
-				$header_height = $this->params->get('header_height',  24);
-
-				$i = 0;
-
-				foreach ($branches as $k => &$branch)
-				{
-					$branch->top = $header_height + ($branch_height * $i++);
-				}
-
-				$this->branches = $branches;
+				throw new Exception("No versions found.");
 			}
-			else
+			$this->sanitize($branches);
+
+			if (empty($branches))
 			{
-				// we should add exception here
+				throw new Exception("No versions found.");
 			}
+
+			$this->setTop($branches);
+			$this->sort($branches);
+
+			$this->branches = $branches;
 		}
 
 		return $this->branches;
 	}
 
 	/**
+	 * Get Legend values (by color)
+	 *
+	 * @return array
+	 * @since 2.0.1
+	 */
+	public function legend(): array
+	{
+		if (empty($this->legend))
+		{
+			$branches = $this->branches();
+
+			foreach ($branches as $version)
+			{
+				foreach ($version->dates as $date)
+				{
+					$this->legend[$date->color] = $date;
+				}
+			}
+		}
+
+		return $this->legend;
+	}
+
+	/**
 	 * Current state of a branch
 	 *
-	 * @param stdClass  $branch  The branch values
+	 * @param array  $dates  The branch dates
 	 *
 	 * @return string|null
-	 * @since 1.0.0
+	 * @since 2.0.1
 	 */
-	public function state(stdClass $branch): ?string
+	public function state(array $dates): ?string
 	{
-		$initial = new DateTime($branch->start);
-		$security = new DateTime($branch->security);
-		$end = new DateTime($branch->end);
+		// Determine the current state.
+		$now = new DateTime();
 
-		if ($initial && $security)
+		// Check if today's date is before the earliest start date.
+		$earliestDate = DateTime::createFromFormat('d-m-Y', $dates[0]->start);
+		if ($now < $earliestDate)
 		{
-			$now = new DateTime;
+			return 'vcs-future';
+		}
 
-			if ($now >= $end)
+		// Check if today's date is after the latest end date.
+		$latestDate = DateTime::createFromFormat('d-m-Y', end($dates)->end);
+		if ($now > $latestDate)
+		{
+			return 'vcs-eol';
+		}
+
+		// Determine which state the current date falls under.
+		foreach ($dates as $date)
+		{
+			$initial = DateTime::createFromFormat('d-m-Y', $date->start);
+			$end = DateTime::createFromFormat('d-m-Y', $date->end);
+
+			if ($now >= $initial && $now <= $end)
 			{
-				return 'eol';
+				return $date->state;
 			}
-
-			if ($security && $now >= $security)
-			{
-				return 'security';
-			}
-
-			if ($now >= $initial)
-			{
-				return 'stable';
-			}
-
-			return 'future';
 		}
 
 		return null;
@@ -252,4 +290,119 @@ class ModVersion_Calendar_svgHelper
 			);
 	}
 
+	/**
+	 * Sort Branches state's by date
+	 *
+	 * @param array  $branches  The branches
+	 *
+	 * @return void
+	 * @since 2.0.1
+	 */
+	protected function sort(array &$branches): void
+	{
+		foreach ($branches as $key => &$branch)
+		{
+			usort($branch->dates, function($a, $b) {
+				$startDateA = DateTime::createFromFormat('d-m-Y', $a->start);
+				$startDateB = DateTime::createFromFormat('d-m-Y', $b->start);
+
+				if ($startDateA == $startDateB)
+				{
+					$endDateA = DateTime::createFromFormat('d-m-Y', $a->end);
+					$endDateB = DateTime::createFromFormat('d-m-Y', $b->end);
+					return $endDateA <=> $endDateB;
+				}
+
+				return $startDateA <=> $startDateB;
+			});
+		}
+	}
+
+	/**
+	 * Set Top
+	 *
+	 * Calculates the top position for each branch based on parameters for branch height and header height.
+	 *
+	 * @param array $branches Reference to the branches array.
+	 *
+	 * @return void
+	 * @since 2.0.1
+	 */
+	protected function setTop(array &$branches): void
+	{
+		$branch_height = $this->params->get('branch_height', 30);
+		$header_height = $this->params->get('header_height', 24);
+
+		$i = 0;
+		foreach ($branches as $key => &$branch)
+		{
+			$branch->top = $header_height + ($branch_height * $i++);
+		}
+	}
+
+	/**
+	 * Sanitize
+	 *
+	 * Sanitizes the branches by checking the existence and type of 'dates' and 'date->state'. 
+	 * Also modifies the state of each date entry within a branch.
+	 *
+	 * @param array $branches Reference to the branches array.
+	 *
+	 * @return void
+	 * @since 2.0.1
+	 */
+	protected function sanitize(array &$branches): void
+	{
+		foreach ($branches as $key => &$branch)
+		{
+			if (empty($branch->dates) || !is_object($branch->dates))
+			{
+				unset($branches[$key]);
+				continue;
+			}
+
+			$branch->dates = (array) $branch->dates;
+
+			$remove = false;
+			foreach ($branch->dates as $k => &$date)
+			{
+				if (empty($date->state))
+				{
+					$remove = true;
+					continue;
+				}
+				$date->state = $this->makeSafe($key . '-' . $date->state);
+			}
+
+			if ($remove)
+			{
+				unset($branches[$key]);
+			}
+		}
+	}
+
+	/**
+	 * Get css safe class name
+	 *
+	 * @param string  $name  The string to make safe
+	 *
+	 * @return string
+	 * @since 2.0.1
+	 */
+	protected function makeSafe(string $name): string
+	{
+		// Ensure it doesn't start with a digit
+		if (preg_match('/^[0-9]/', $name))
+		{
+			$name = 'vcs-' . $name;
+		}
+
+		// Replace any non-alphanumeric characters with hyphens
+		$name = preg_replace('/[^a-zA-Z0-9]+/', '-', $name);
+
+		// Convert to lowercase
+		$name = strtolower($name);
+
+		return $name;
+	}
 }
